@@ -72,7 +72,8 @@ class SAC(RLC):
         """
 
         # Run once the regression model has been fitted
-        # Normalize all the observations using periodical normalization, one-hot encoding, or -1, 1 scaling. It also removes observations that are not necessary (solar irradiance if there are no solar PV panels).
+        # Normalize all the observations using periodical normalization, one-hot encoding, or -1, 1 scaling. 
+        # It also removes observations that are not necessary (solar irradiance if there are no solar PV panels).
 
         for i, (o, a, r, n) in enumerate(zip(observations, actions, reward, next_observations)):
             o = self.get_encoded_observations(i, o)

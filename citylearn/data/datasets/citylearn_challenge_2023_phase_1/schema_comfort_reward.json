@@ -250,15 +250,13 @@
     }
   },
   "reward_function": {
-    "type": "citylearn.reward_function.SolarPenaltyAndComfortReward",
+    "type": "citylearn.reward_function.ComfortReward",
     "attributes": {
       "band": 1.0,
       "lower_exponent": 2.0,
-      "higher_exponent": 3.0,
-      "coefficients": [0.8, 0.2]
-    }  
+      "higher_exponent": 3.0
+    }
   },
-  
   "buildings": {
     "Building_1": {
       "type": "citylearn.building.LSTMDynamicsBuilding",

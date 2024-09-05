@@ -80,7 +80,7 @@ ACTIVE_OBSERVATIONS = [
 # print('All CityLearn datasets:', sorted(DataSet.get_names()))
 schema = DataSet.get_schema(DATASET_NAME)
 root_directory = schema['root_directory']
-result_save_dir = '/data/mengxin/ping/CityLearn/results/2023/Multiagent_finetune_with_reward'
+result_save_dir = '/data/mengxin/ping/CityLearn/results/2023/Multiagent_finetune_with_solar_comfort_reward_0.8_0.2_no_information_sharing'
 # Check if the directory exists
 if not os.path.exists(result_save_dir):
     # If it doesn't exist, create the directory
@@ -111,7 +111,8 @@ multi_agent_kwargs = {
     'tau': 0.005,
     'random_seed': RANDOM_SEED,
     'discount': 0.99,
-    'hidden_dimension': [256, 256]
+    'hidden_dimension': [256, 256],
+    # 'information_sharing': False
 }
 
 
@@ -350,10 +351,11 @@ my_sac_model.env.unwrapped.evaluate()
 
 ##############Finetuned SAC##############
 def train_your_custom_sac(
-    agent_kwargs: dict, episodes: int, reward_function: RewardFunction,
+    agent_kwargs: dict, episodes: int, 
     building_count: int, day_count: int, active_observations: list,
     random_seed: int, reference_envs: dict = None,
-    show_figures: bool = None
+    show_figures: bool = None,
+    reward_function: RewardFunction = None
 ) -> dict:
     """Trains a custom soft-actor critic (SAC) agent on a custom environment.
 
@@ -421,7 +423,7 @@ def train_your_custom_sac(
         active_observations=active_observations,
         simulation_start_time_step=simulation_start_time_step,
         simulation_end_time_step=simulation_end_time_step,
-        reward_function=reward_function
+        # reward_function=reward_function
     )
 
     # wrap environment
@@ -566,16 +568,16 @@ class YourCustomReward(CustomReward):
 your_results = train_your_custom_sac(
     agent_kwargs=sac_agent_kwargs,
     episodes=your_episodes,
-    reward_function=YourCustomReward,
     building_count=BUILDING_COUNT,
     day_count=DAY_COUNT,
     active_observations=ACTIVE_OBSERVATIONS,
     random_seed=RANDOM_SEED,
     reference_envs={
         'Baseline': baseline_env,
-        'MA information sharing': my_sac_env
+        'MA no information sharing': my_sac_env
     },
     show_figures=True,
+    # reward_function=YourCustomReward
 )
 
 
