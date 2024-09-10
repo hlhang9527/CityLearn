@@ -80,7 +80,8 @@ ACTIVE_OBSERVATIONS = [
 # print('All CityLearn datasets:', sorted(DataSet.get_names()))
 schema = DataSet.get_schema(DATASET_NAME)
 root_directory = schema['root_directory']
-result_save_dir = '/data/mengxin/ping/CityLearn/results/2023/Multiagent_finetune_with_solar_comfort_reward_0.8_0.2_no_information_sharing'
+result_save_dir = '/data/mengxin/ping/CityLearn/results/2023/Multiagent_finetune_with_solar_comfort_reward_0.8_0.2_information_sharing_test_new_metrics'
+# result_save_dir = '/data/mengxin/ping/CityLearn/results/2023/Plot_test_new_metrics'
 # Check if the directory exists
 if not os.path.exists(result_save_dir):
     # If it doesn't exist, create the directory
@@ -223,7 +224,7 @@ sac_env = StableBaselines3Wrapper(sac_env)
 sac_model = SAC(policy='MlpPolicy', env=sac_env, seed=RANDOM_SEED)
 
 # ----------------- CALCULATE NUMBER OF TRAINING EPISODES -----------------
-sac_episodes = 1
+sac_episodes = 100
 print('Number of episodes to train in SAC:', sac_episodes)
 sac_episode_timesteps = sac_env.unwrapped.time_steps - 1
 sac_total_timesteps = sac_episodes*sac_episode_timesteps

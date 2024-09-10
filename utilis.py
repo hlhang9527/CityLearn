@@ -218,7 +218,24 @@ def get_kpis(env: CityLearnEnv) -> pd.DataFrame:
         'carbon_emissions_total': 'Emissions',
         'daily_peak_average': 'Avg. daily peak',
         'ramping_average': 'Ramping',
-        'monthly_one_minus_load_factor_average': '1 - load factor'
+        'monthly_one_minus_load_factor_average': '1 - load factor',
+        ##new kpis added
+        'annual_normalized_unserved_energy_total' : 'annual normalized unserved energy total',
+        'all_time_peak_average': 'all time_peak average',
+        'discomfort_cold_delta_average': 'Discomfort Cold Delta Average',
+        'discomfort_cold_delta_maximum': 'Discomfort Cold Delta Maximum',
+        'discomfort_cold_delta_minimum': 'Discomfort Cold Delta Minimum',
+        'discomfort_cold_proportion': 'Discomfort Cold Proportion',
+        'discomfort_hot_delta_average': 'Discomfort Hot Delta Average',
+        'discomfort_hot_delta_maximum': 'Discomfort Hot Delta Maximum',
+        'discomfort_hot_delta_minimum': 'Discomfort Hot Delta Minimum',
+        'discomfort_hot_proportion': 'Discomfort Hot Proportion',
+        'discomfort_proportion': 'Discomfort Proportion',
+        'electricity_consumption_total': 'Electricity Consumption Total',
+        'one_minus_thermal_resilience_proportion': '1 - Thermal Resilience Proportion',
+        'power_outage_normalized_unserved_energy_total': 'Power Outage Normalized Unserved Energy Total',
+        'zero_net_energy': 'Zero Net Energy'       
+
     }
     kpis = kpis[
         (kpis['cost_function'].isin(kpi_names))
@@ -266,13 +283,19 @@ def plot_building_kpis(envs) -> plt.Figure:
     column_count = min(column_count_limit, len(kpi_names))
     building_count = len(kpis['name'].unique())
     env_count = len(envs)
-    figsize = (3.0*column_count, 0.3*env_count*building_count*row_count)
+    figsize = (5.0*column_count, 0.3*env_count*building_count*row_count)
     fig, _ = plt.subplots(
         row_count, column_count, figsize=figsize, sharey=True
     )
 
-    for i, (ax, (k, k_data)) in enumerate(zip(fig.axes, kpis.groupby('kpi'))):
-        sns.barplot(x='value', y='name', data=k_data, hue='env_id', ax=ax)
+    plot_index = 0
+    for k, k_data in kpis.groupby('kpi'):
+        # Check if all values are zero
+        if k_data['value'].sum() == 0:
+            continue  # Skip plotting this KPI if all values are zero
+
+        ax = fig.axes[plot_index]  # Use the next available subplot
+        sns.barplot(x='value', y='name', data=k_data, hue='env_id', ax=ax, dodge=True, legend=False)
         ax.set_xlabel(None)
         ax.set_ylabel(None)
         ax.set_title(k)
@@ -280,15 +303,24 @@ def plot_building_kpis(envs) -> plt.Figure:
         for j, _ in enumerate(envs):
             ax.bar_label(ax.containers[j], fmt='%.2f')
 
-        if i == len(kpi_names) - 1:
-            ax.legend(
-                loc='upper left', bbox_to_anchor=(1.3, 1.0), framealpha=0.0
-            )
-        else:
-            ax.legend().set_visible(False)
+        # if plot_index == len(kpi_names) - 1:
+        #     ax.legend(loc='upper left', bbox_to_anchor=(1.3, 1.0), framealpha=0.0)
+        # else:
+        #     ax.legend().set_visible(False)
 
-        for s in ['right','top']:
+        for s in ['right', 'top']:
             ax.spines[s].set_visible(False)
+
+        plot_index += 1  # Only increment when a plot is actually created
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower right')
+
+    # Adjust the layout to avoid empty plots
+    for ax in fig.axes[plot_index:]:
+        ax.remove()
+
+    plt.tight_layout()
 
     return fig
 
@@ -313,36 +345,51 @@ def plot_district_kpis(envs) -> plt.Figure:
 
     for k, v in envs.items():
         kpis = get_kpis(v)
-        kpis = kpis[kpis['level']=='district'].copy()
+        kpis = kpis[kpis['level'] == 'district'].copy()
         kpis['env_id'] = k
         kpis_list.append(kpis)
 
     # Combine all the KPIs into one DataFrame
     kpis_df = pd.concat(kpis_list, ignore_index=True, sort=False)
+    
     # Print the KPIs in a table format using 'tabulate'
     print(tabulate(kpis_df, headers='keys', tablefmt='grid'))
 
-    kpis = pd.concat(kpis_list, ignore_index=True, sort=False)
+    # Filter out the KPIs where all values are zero
+    filtered_kpis = kpis_df.groupby('kpi').filter(lambda x: x['value'].sum() != 0)
+
+    # Check if there are any KPIs left to plot
+    if filtered_kpis.empty:
+        print("All KPIs have zero values. No plots to show.")
+        return None
+
+    # Determine the number of KPIs and other layout properties
+    kpi_count = len(filtered_kpis['kpi'].unique())
+    env_count = len(envs)
     row_count = 1
     column_count = 1
-    env_count = len(envs)
-    kpi_count = len(kpis['kpi'].unique())
-    figsize = (6.0*column_count, 0.225*env_count*kpi_count*row_count)
+    figsize = (10.0 * column_count, 0.225 * env_count * kpi_count * row_count)
     fig, ax = plt.subplots(row_count, column_count, figsize=figsize)
-    sns.barplot(x='value', y='kpi', data=kpis, hue='env_id', ax=ax)
+
+    # Plot the filtered KPIs
+    sns.barplot(x='value', y='kpi', data=filtered_kpis, hue='env_id', ax=ax)
     ax.set_xlabel(None)
     ax.set_ylabel(None)
 
+    # Add bar labels for each plot
     for j, _ in enumerate(envs):
         ax.bar_label(ax.containers[j], fmt='%.2f')
 
-    for s in ['right','top']:
+    # Remove unwanted spines
+    for s in ['right', 'top']:
         ax.spines[s].set_visible(False)
 
+    # Add a legend
     ax.legend(loc='upper left', bbox_to_anchor=(1.3, 1.0), framealpha=0.0)
     plt.tight_layout()
 
     return fig
+
 
 def plot_building_load_profiles(
     envs: dict, daily_average: bool = None
@@ -619,3 +666,4 @@ def plot_rewards(ax: plt.Axes, rewards: list, title: str) -> plt.Axes:
     ax.set_title(title)
 
     return ax
+
